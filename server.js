@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,10 +13,10 @@ app.use(express.json({ limit: '5mb' }));
 // ===============================
 // Serve Frontend Files
 // ===============================
-app.use(express.static(path.join(__dirname, '..')));
+app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ===============================
@@ -42,7 +43,7 @@ app.post('/api/chat', async (req, res) => {
 
         if (!ANTHROPIC_API_KEY) {
             return res.status(500).json({
-                error: 'Server is missing ANTHROPIC_API_KEY.'
+                error: 'Server is missing ANTHROPIC_API_KEY. Set it in your environment variables.'
             });
         }
 
@@ -64,7 +65,7 @@ app.post('/api/chat', async (req, res) => {
         if (!response.ok) {
             const detail = await response.text();
             return res.status(response.status).json({
-                error: 'Upstream AI API error',
+                error: 'Anthropic API error',
                 detail
             });
         }
@@ -80,7 +81,7 @@ app.post('/api/chat', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Chat proxy error:', err);
+        console.error(err);
 
         res.status(500).json({
             error: 'Internal server error'
@@ -96,8 +97,17 @@ app.get('/health', (req, res) => {
 });
 
 // ===============================
+// 404 Handler
+// ===============================
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Route not found'
+    });
+});
+
+// ===============================
 // Start Server
 // ===============================
 app.listen(PORT, () => {
-    console.log(`Nova AI backend listening on port ${PORT}`);
+    console.log(`Nova AI server running on port ${PORT}`);
 });
